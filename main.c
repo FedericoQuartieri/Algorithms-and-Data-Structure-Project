@@ -120,6 +120,20 @@ int* Inorder_tree_walk_array_left_right(station* x, int* array, int *len){
     }
 }
 
+int* Inorder_tree_walk_array_right_left(station* x, int* array, int *len){
+    if (x != NULL){
+        array = Inorder_tree_walk_array_right_left(x->right, array, len);
+        array[(*len)] = x->distance;
+        array[(*len)+1] = *(x->vehicles);
+        (*len) += 2;
+        array = realloc(array, ((*len)+2)*sizeof(int));
+        array = Inorder_tree_walk_array_right_left(x->left, array, len);
+        return array;
+    } else {
+        return array;
+    }
+}
+
 
 
 // void Inorder_left_right(station* x, int dist1, int dist2){
@@ -163,6 +177,40 @@ void Max_heapify(int* A, int len, int i){
         }
     }
 }
+
+
+
+
+void Max_heapify_top_down(int* A, int len, int i){
+    int l = 2*i+1; //left
+    int r = 2*i+2; // right
+    int max;
+    char go;
+    if (l < len && A[l]>A[i]){
+        max = l;
+        go = 'l';
+    } else {
+        max = i;
+    }
+    if (r < len && A[r] > A[max]){
+        max = r;
+        go = 'r';
+    }
+    if (max != i){
+        int tmp = A[i];
+        A[i] = A[max];
+        A[max] = tmp;
+        if (go == 'r'){
+            Max_heapify_top_down(A, len, 2*i+2);
+        } else {
+            Max_heapify_top_down(A, len, 2*i+1);
+        }
+    }
+}
+
+
+
+
 
 int* Heap_add(int autonomy, int* vehicles, int *num_vehicles){
     if (*num_vehicles == 0){
@@ -246,7 +294,7 @@ void RottamaAuto (int distance, int autonomy){
             res->vehicles[index] = res->vehicles[res->num_vehicles-1];
             res->num_vehicles --;
             res->vehicles = realloc(res->vehicles,res->num_vehicles*sizeof(int));
-            Max_heapify(res->vehicles, res->num_vehicles, index);   
+            Max_heapify_top_down(res->vehicles, res->num_vehicles, index);   
             printf("rottamata\n");
         }
     }
@@ -254,81 +302,71 @@ void RottamaAuto (int distance, int autonomy){
 
 
 
-void PianificaPercorso (int dist1, int dist2) { // manca ottimizzazzione con nuemro di stazioni uguali
+void PianificaPercorso (int dist1, int dist2) {
     if (dist1 == dist2){
         printf("%d\n", dist1);
     } else if (dist1 < dist2){ // da sinistra verso destra , inorder tree-walk left, parent, right
         int* array = malloc(2*sizeof(int));
         int len = 0;
-        array = Inorder_tree_walk_array_left_right(Stations, array, &len);
-
+        array = Inorder_tree_walk_array_right_left(Stations, array, &len);
 
         for (int i = 0; i < len; i++){
             printf("%d\n",array[i]);
         }
 
+        int *res = malloc(sizeof(int));
+        int res_size = 0, start = 0, dist = 0, exists = 0, found = 0;
 
-
-        int start = 0, dist = 0, max_autonomy = 0, max_index = 0, max_sum = 0, cur_index = 0;
-
-        for (int i = 0, j = 1; i < len; i+=2, j+=2){
+        for (int i = 0, j=1; i < len; i+=2, j+=2){
             if (start){
-                dist += array[i] - array[i-2];
-                if (array[i] == dist2){
-                    if (array[cur_index+1] >= dist2 - array[cur_index]){ // se la'autonomia della stazione in cui mi trovo mi consente di fare la strada per arrivare alla fine 
-                        printf("%d\n", array[i]);
+                dist += array[i-2] - array[i];
+                if (dist > array[j]){ // cambio macchina 
+                    if (!exists){
+                        printf("nessun percorso");
                         break;
-                    } else {
-                        int found = 0;
-                        for (int k = cur_index+2; k < i && !found; k++){
-                            if (array[k+1]>=dist2-array[k]){
-                                printf("%d %d\n", array[k], array[i]);
-                                found = 1;
-                            }
-                        }
-                        if (found){
-                            break;
-                        } else {
-                            printf("nessun percorso\n");
-                            break;
-                        }
-                    }
-                }
-                if (dist > array[cur_index+1]){  // non posso andare oltre con l'autonomia che ho e scelgo la stazione migliore
-                    if (max_index != cur_index){
-                        i = max_index;
-                        cur_index = i;
-                        j = 1+1;
-                        printf("%d ", array[i]);
+                    } else { // cambio macchina
+                        i -= 2;
+                        j -= 2;
+                        res[res_size] = array[i];
+                        res_size++;
+                        res = realloc(res, (res_size+1)*sizeof(int));
                         dist = 0;
-                        max_autonomy = 0;
-                        max_sum = 0;
-                    } else {
-                        printf("nessun percorso\n");
-                        break;
+                        exists = 0;
                     }
+                } else { 
+                    exists = 1;
+                    // all good
                 }
-                if (array[j]+array[i] > max_sum){
-                    max_sum = array[j] + array[i];
-                    max_index = i;
-                    max_autonomy = array[j];
+                if (array[i]==dist1){ // finito
+                    res[res_size] = array[i];
+                    res_size ++;
+                    found = 1;
+                    break;
                 }
-
             }
-            if (array[i] == dist1){
+            if (array[i] == dist2){
                 start = 1;
-                max_autonomy = array[j];
-                max_index = i;
-                max_sum = array[i] + array[j];
+                res[res_size] = dist2;
+                res_size++;
+                res = realloc(res, (res_size+1)*sizeof(int));
                 dist = 0;
-                cur_index = i;
-                printf("%d ", dist1);
             }
         }
 
+        if (found){
+            for (int i=res_size-1; i>=0; i--){
+                if (i != 0){
+                    printf("%d ",res[i]);
+                } else {
+                    printf("%d",res[i]);
+                }
+            }
+        }
+        printf("\n");
+
 
     } else { // da destra verso sinistra, inorder tree-walk right, parent, left
-        printf("PASS");
+        printf("PASS\n");
     }
 }
 
@@ -368,6 +406,14 @@ int main(){
         scanf ("%s ", input);
     } while (!feof(stdin));
 
+    // int* array = malloc(2*sizeof(int));
+    // int len = 0;
+
+    // array = Inorder_tree_walk_array_right_left(Stations, array, &len);
+
+    // for (int i = 0; i < len; i++){
+    //     printf("%d\n",array[i]);
+    // }
 
     //Inorder_tree_walk(Stations);
 
@@ -380,3 +426,68 @@ int main(){
 
 
 // non va optimized out, e warning: unhandled dyld version (17)
+
+
+
+
+
+
+
+
+
+        // int start = 0, dist = 0, max_autonomy = 0, max_index = 0, max_sum = 0, cur_index = 0;
+
+        // for (int i = 0, j = 1; i < len; i+=2, j+=2){
+        //     if (start){
+        //         dist += array[i] - array[i-2];
+        //         if (array[i] == dist2){
+        //             if (array[cur_index+1] >= dist2 - array[cur_index]){ // se la'autonomia della stazione in cui mi trovo mi consente di fare la strada per arrivare alla fine 
+        //                 printf("%d\n", array[i]);
+        //                 break;
+        //             } else {
+        //                 int found = 0;
+        //                 for (int k = cur_index+2; k < i && !found; k++){
+        //                     if (array[k+1]>=dist2-array[k]){
+        //                         printf("%d %d\n", array[k], array[i]);
+        //                         found = 1;
+        //                     }
+        //                 }
+        //                 if (found){
+        //                     break;
+        //                 } else {
+        //                     printf("nessun percorso\n");
+        //                     break;
+        //                 }
+        //             }
+        //         }
+        //         if (dist > array[cur_index+1]){  // non posso andare oltre con l'autonomia che ho e scelgo la stazione migliore
+        //             if (max_index != cur_index){
+        //                 i = max_index;
+        //                 cur_index = i;
+        //                 j = 1+1;
+        //                 printf("%d ", array[i]);
+        //                 dist = 0;
+        //                 max_autonomy = 0;
+        //                 max_sum = 0;
+        //             } else {
+        //                 printf("nessun percorso\n");
+        //                 break;
+        //             }
+        //         }
+        //         if (array[j]+array[i] > max_sum){
+        //             max_sum = array[j] + array[i];
+        //             max_index = i;
+        //             max_autonomy = array[j];
+        //         }
+
+        //     }
+        //     if (array[i] == dist1){
+        //         start = 1;
+        //         max_autonomy = array[j];
+        //         max_index = i;
+        //         max_sum = array[i] + array[j];
+        //         dist = 0;
+        //         cur_index = i;
+        //         printf("%d ", dist1);
+        //     }
+        // }
