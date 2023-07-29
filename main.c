@@ -373,8 +373,6 @@ void PianificaPercorso (int dist1, int dist2) {
 
 // // ----------------------------------------------------------------------------------------------------------------
 
-//set startup-with-shell off
-//set args `cat /etc/passwd`
 
 int main(){
     char input[1024]; // probabilmente serve di più
@@ -421,73 +419,3 @@ int main(){
 
     return 0;
 }
-
-
-
-
-// non va optimized out, e warning: unhandled dyld version (17)
-
-
-
-
-
-
-
-
-
-        // int start = 0, dist = 0, max_autonomy = 0, max_index = 0, max_sum = 0, cur_index = 0;
-
-        // for (int i = 0, j = 1; i < len; i+=2, j+=2){
-        //     if (start){
-        //         dist += array[i] - array[i-2];
-        //         if (array[i] == dist2){
-        //             if (array[cur_index+1] >= dist2 - array[cur_index]){ // se la'autonomia della stazione in cui mi trovo mi consente di fare la strada per arrivare alla fine 
-        //                 printf("%d\n", array[i]);
-        //                 break;
-        //             } else {
-        //                 int found = 0;
-        //                 for (int k = cur_index+2; k < i && !found; k++){
-        //                     if (array[k+1]>=dist2-array[k]){
-        //                         printf("%d %d\n", array[k], array[i]);
-        //                         found = 1;
-        //                     }
-        //                 }
-        //                 if (found){
-        //                     break;
-        //                 } else {
-        //                     printf("nessun percorso\n");
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //         if (dist > array[cur_index+1]){  // non posso andare oltre con l'autonomia che ho e scelgo la stazione migliore
-        //             if (max_index != cur_index){
-        //                 i = max_index;
-        //                 cur_index = i;
-        //                 j = 1+1;
-        //                 printf("%d ", array[i]);
-        //                 dist = 0;
-        //                 max_autonomy = 0;
-        //                 max_sum = 0;
-        //             } else {
-        //                 printf("nessun percorso\n");
-        //                 break;
-        //             }
-        //         }
-        //         if (array[j]+array[i] > max_sum){
-        //             max_sum = array[j] + array[i];
-        //             max_index = i;
-        //             max_autonomy = array[j];
-        //         }
-
-        //     }
-        //     if (array[i] == dist1){
-        //         start = 1;
-        //         max_autonomy = array[j];
-        //         max_index = i;
-        //         max_sum = array[i] + array[j];
-        //         dist = 0;
-        //         cur_index = i;
-        //         printf("%d ", dist1);
-        //     }
-        // }
