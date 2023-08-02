@@ -354,9 +354,16 @@ void AggiungiStazione (int distance, int num_vehicles, int autonomies[512]) {
     } else {
         printf("non aggiunta\n");
     }
-    for (int i = 0; i < num_vehicles; i++){
-        element->vehicles = Heap_add(autonomies[i], element->vehicles, &element->num_vehicles); // inserisci tutte le auto
+    if (num_vehicles == 0){
+        element -> vehicles = malloc(sizeof(int));
+        *(element -> vehicles) = 0;
+        element -> num_vehicles = 1;
+    } else {
+        for (int i = 0; i < num_vehicles; i++){
+            element->vehicles = Heap_add(autonomies[i], element->vehicles, &element->num_vehicles); // inserisci tutte le auto
+        }
     }
+
 }
 
 
@@ -412,7 +419,8 @@ void PianificaPercorso (int dist1, int dist2) {
     if (dist1 == dist2){
         printf("%d\n", dist1);
     } else if (dist1 < dist2){ // da sinistra verso destra , inorder tree-walk left, parent, right
-        int* array = malloc(2*sizeof(int));
+        
+int* array = malloc(2*sizeof(int));
         int len = 0;
         array = Inorder_tree_walk_array_right_left(Stations, array, &len, dist1, dist2);
 
@@ -427,17 +435,38 @@ void PianificaPercorso (int dist1, int dist2) {
             if (start){
                 dist += array[i-2] - array[i];
                 if (dist > array[j]){ // cambio macchina 
-                    if (!exists){
-                        printf("nessun percorso");
-                        break;
-                    } else { // cambio macchina
-                        i -= 2;
-                        j -= 2;
+                    int inner_found = 0;
+                    for (int h = i+2, k = j+2; k < len; h+=2, k+=2){ // e la complessità va a puttane
+                        dist+=array[h-2]-array[h];
+                        if (array[h] == dist2){
+                            break;
+                        } 
+                        if (array[k] >= dist){
+                            inner_found=1;
+                            i = h;
+                            j = k;
+                        }
+                    }
+                    if (inner_found){
                         res[res_size] = array[i];
                         res_size++;
                         res = realloc(res, (res_size+1)*sizeof(int));
                         dist = 0;
                         exists = 0;
+                    }
+                    else {
+                        if (!exists){
+                            printf("nessun percorso");
+                            break;
+                        } else { // cambio macchina
+                            i -= 2;
+                            j -= 2;
+                            res[res_size] = array[i];
+                            res_size++;
+                            res = realloc(res, (res_size+1)*sizeof(int));
+                            dist = 0;
+                            exists = 0;
+                        }
                     }
                 } else { 
                     exists = 1;
@@ -569,7 +598,7 @@ void PianificaPercorso (int dist1, int dist2) {
 
 int main(){
     char input[1024]; // probabilmente serve di più
-    FILE * f = fopen("../others/archive/archivio_test_aperti/open_9.txt", "r");
+    FILE * f = fopen("../others/archive/extra_test_cases/open_extra_gen.txt", "r");
     f = stdin;
     fscanf(f, "%s ", input);
     int distance=0, vehicles_num=0, autonomy=0, dist1=0, dist2=0, autonomies[512];
