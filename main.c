@@ -472,9 +472,9 @@ void PianificaPercorso (int dist1, int dist2) {
 
 
     } else { // da destra verso sinistra, inorder tree-walk right, parent, left
-        int* array1 = malloc(2*sizeof(int));
+        int* array = malloc(2*sizeof(int));
         int len = 0;
-        array1 = Inorder_tree_walk_array_right_left(Stations, array1, &len, dist2, dist1);
+        array = Inorder_tree_walk_array_right_left(Stations, array, &len, dist2, dist1);
 
         // for (int i = 0; i < len; i++){
         //     printf("%d\n",array[i]);
@@ -485,179 +485,66 @@ void PianificaPercorso (int dist1, int dist2) {
         int * possibilities1 = malloc(sizeof(int));
         int * possibilities2 = malloc(sizeof(int));
         int * possibilities3 = malloc(sizeof(int));
-        int res_size = 0, found = 0, poss_size = 0;
-        res = pianifica_helper(&found, &res_size, res, array1, len, dist1, dist2, &possibilities1, &possibilities2, &possibilities3, &poss_size);
+        int res_size = 0, found = 0, poss_size = 0, finished = 0;
+        res = pianifica_helper(&found, &res_size, res, array, len, dist1, dist2, &possibilities1, &possibilities2, &possibilities3, &poss_size);
 
-        free(array1);
 
-        // int * counter = malloc(poss_size * sizeof(int));
-        // for (int i = 0; i < poss_size; i++) {
-        //     counter[i] = 0;
-        // }
-
+        int * counter = malloc(poss_size * sizeof(int));
+        for (int i = 0; i < poss_size; i++) {
+            counter[i] = 0;
+        }
 
 
 
-        // counter = increase_counter(counter, possibilities2, poss_size, &finished);
 
-        // while (!finished) {
-        //     for (int i = 0; i < poss_size; i++){
-        //         res[possibilities3[i]] = array[possibilities1[i] + counter[i]*2];
-        //     }
-        //     // check possibility
-        //     if (possible){
-        //         confronta(res1,res2, res_size)
-        //         // sostituisci 
-        //     }
-        //     counter = increase_counter(counter, possibilities2, poss_size, &finished);
-        // }
+        counter = increase_counter(counter, possibilities2, poss_size, &finished);
 
-        printf("poss_size: %d\n", poss_size);
-
-        int* array = malloc(2*sizeof(int));
-        len = 0;
-        array = Inorder_tree_walk_array_left_right(Stations, array, &len, dist2, dist1);
-
-        for (int l = poss_size-1; l >= 0; l--){
-            for (int t = 0; t <= possibilities2[l]; t++){
-                //dist1 = array[possibilities1[i]+j*2];
-                int * res2 = malloc((res_size+1)*sizeof(int));
-                printf("poss_size: %d\n", poss_size);
-                for (int h = 0; h < res_size+1; h++){
-                    res2[h] = 0;
+        while (!finished) { // ogni ciclo controlla una permutazione
+            int change = 0;
+            for (int i = 0; i < poss_size; i++){ // ogni ciclo gestisce un elemento della permutazione
+                int dist = array[possibilities1[i] + counter[i]*2] - res[possibilities3[i]+1];
+                if ( array[possibilities1[i] + (counter[i]*2) + 1] >= dist){
+                    //good
+                    change = 1;
+                } else {
+                    change = 0;
+                    break;
                 }
-
-                for (int h = 0, k = res_size-1; h < res_size - possibilities3[l]-1; h++, k--){
-                    res2[h] = res[k];
-                }
-
-
-                // printf("res2:  ");
-                // for (int z = 0; z < res_size; z++){
-                //     printf("%d ",res2[z]);
-                // }
-                // printf("\n");
-
-
-
-                int res2_size = res_size - possibilities3[l]-1, start = 0, dist = 0, exists = 0, found = 0;
-                
-                //printf("len: %d\n", len);
-                for (int i = len - 2 - possibilities1[l]-t*2, j = i+1; i < len; i+=2, j+=2){
-                    // printf("%d   ", array[i]);
-                    // printf("res2:  ");
-                    // for (int z = 0; z < res_size; z++){
-                    //     printf("%d ",res2[z]);
-                    // }
-                    // printf("\n");
-                    if (start){
-                        dist += array[i] - array[i-2];
-                        if (dist > array[j]){ // cambio macchina 
-                            int inner_found = 0;
-                            for (int h = i+2, k = j+2; k < len; h+=2, k+=2){ // e la complessità va a puttane
-                                dist+=array[h]-array[h-2];
-                                if (array[h] == dist2){
-                                    break;
-                                } 
-                                if (array[k] >= dist){
-                                    inner_found=1;
-                                    i = h;
-                                    j = k;
-                                }
-                            }
-                            if (inner_found){
-                                res2[res2_size] = array[i];
-                                res2_size++;
-                                if (res2_size > res_size){
-                                    found = 0;
-                                    break;
-                                }
-                                dist = 0;
-                                exists = 0;
-                            }
-                            else {
-                                if (!exists){
-                                    printf("nessun percorso");
-                                    break;
-                                } else { // cambio macchina
-                                    i -= 2;
-                                    j -= 2;
-                                    res2[res2_size] = array[i];
-                                    res2_size++;
-                                    if (res2_size > res_size){
-                                        found = 0;
-                                    break;
-                                }
-                                    dist = 0;
-                                    exists = 0;
-                                }
-                            }
-                        } else { 
-                            exists = 1;
-                            // all good
-                        }
-                        if (array[i] == dist1){ // finito
-                            res2[res2_size] = array[i];
-                            res2_size ++;
-                            if (res2_size > res_size){
-                                found = 0;
-                                break;
-                            }
-                            found = 1;
-                            break;
-                        }
-                    }
-
-                    if (array[i] == array[len - 2 - possibilities1[l]-t*2]){ // inizio
-                        start = 1;
-                        res2[res2_size] = array[i];
-                        res2_size++;
-                        if (res2_size > res_size){
-                            found = 0;
-                            break;
-                        }
-                        dist = 0;
-                    }
-                }
-
-                if (found){
-
-                    int * res3 = malloc(res_size*sizeof(int));
-
-
-                    printf("res3:  ");
-                    for (int h = 0, k = res_size-1; h < res_size; h++, k--){
-                        res3[h] = res2[k];
-                        printf("%d ", res3[h]);
-                    }
-                    printf("\n");
-
-                    int change = confronta(res3, res, res_size);
-                    if (change){
-                        res = res3;
-                    }
-                }
-
-                printf("\n");
-
             }
+            if (change){
+                int * res2 = malloc(res_size*sizeof(int));
+                for (int j = 0; j < res_size; j++){
+                    res2[j] = res[j];
+                }
+                for (int j = 0; j < poss_size; j++){
+                    res2[possibilities3[j]] = array[possibilities1[j] + counter[j]*2];
+                }
+                change = confronta(res2, res, res_size);
+                if (change){
+                    res = res2;
+                }
+            }
+            
+            counter = increase_counter(counter, possibilities2, poss_size, &finished);
         }
 
+        
 
-        printf("poss_size: %d\n", poss_size);
+
+        // printf("poss_size: %d\n", poss_size);
 
 
-        for (int i = 0; i<poss_size; i++){
-            printf("poss1: %d\n", possibilities1[i]);
-        }
+        // for (int i = 0; i<poss_size; i++){
+        //     printf("poss1: %d\n", possibilities1[i]);
+        // }
 
-        for (int i = 0; i<poss_size; i++){
-            printf("poss2: %d\n", possibilities2[i]);
-        }
+        // for (int i = 0; i<poss_size; i++){
+        //     printf("poss2: %d\n", possibilities2[i]);
+        // }
 
-        for (int i = 0; i<poss_size; i++){
-            printf("poss3: %d\n", possibilities3[i]);
-        }
+        // for (int i = 0; i<poss_size; i++){
+        //     printf("poss3: %d\n", possibilities3[i]);
+        // }
 
 
 
@@ -683,7 +570,7 @@ void PianificaPercorso (int dist1, int dist2) {
 int main(){
     char input[1024]; // probabilmente serve di più
     FILE * f = fopen("../others/archive/archivio_test_aperti/open_9.txt", "r");
-    //f = stdin;
+    f = stdin;
     fscanf(f, "%s ", input);
     int distance=0, vehicles_num=0, autonomy=0, dist1=0, dist2=0, autonomies[512];
     for (int i=0; i<512; i++){
