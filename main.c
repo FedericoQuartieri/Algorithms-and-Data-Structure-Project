@@ -5,6 +5,8 @@
 #define DEBUG = 0;
 
 
+
+
 typedef struct node{
     int distance;
     struct node* left;
@@ -103,6 +105,9 @@ void Tree_delete(station* element){    // given element
         y->left = element->left;
         y->left->parent = y;
     }
+    free(element->vehicles);
+    free(element);
+    
 }
 
 
@@ -349,19 +354,24 @@ void AggiungiStazione (int distance, int num_vehicles, int autonomies[512]) {
     station* element = (station*) malloc(sizeof(station));
     station_constructor(element, distance);
     int res = Tree_insert(element); // inserisci stazione
+    int added = 0;
     if (res == 0){
         printf("aggiunta\n");
+        added = 1;
     } else {
         printf("non aggiunta\n");
+        free(element);
     }
-    if (num_vehicles == 0){
-        element -> vehicles = malloc(sizeof(int));
-        *(element -> vehicles) = 0;
-        element -> num_vehicles = 1;
-    } else {
-        for (int i = 0; i < num_vehicles; i++){
-            element->vehicles = Heap_add(autonomies[i], element->vehicles, &element->num_vehicles); // inserisci tutte le auto
-        }
+    if (added){
+        if (num_vehicles == 0){
+	    element -> vehicles = malloc(sizeof(int));
+	    *(element -> vehicles) = 0;
+	    element -> num_vehicles = 1;
+	} else {
+	    for (int i = 0; i < num_vehicles; i++){
+   	        element->vehicles = Heap_add(autonomies[i], element->vehicles, &element->num_vehicles); // inserisci tutte le auto
+	    }
+	}
     }
 
 }
@@ -419,14 +429,9 @@ void PianificaPercorso (int dist1, int dist2) {
     if (dist1 == dist2){
         printf("%d\n", dist1);
     } else if (dist1 < dist2){ // da sinistra verso destra , inorder tree-walk left, parent, right
-        
-int* array = malloc(2*sizeof(int));
+	int* array = malloc(2*sizeof(int));
         int len = 0;
         array = Inorder_tree_walk_array_right_left(Stations, array, &len, dist1, dist2);
-
-        // for (int i = 0; i < len; i++){
-        //     printf("%d\n",array[i]);
-        // }
 
         int *res = malloc(sizeof(int));
         int res_size = 0, start = 0, dist = 0, exists = 0, found = 0;
@@ -436,7 +441,7 @@ int* array = malloc(2*sizeof(int));
                 dist += array[i-2] - array[i];
                 if (dist > array[j]){ // cambio macchina 
                     int inner_found = 0;
-                    for (int h = i+2, k = j+2; k < len; h+=2, k+=2){ // e la complessità va a puttane
+                    for (int h = i+2, k = j+2; k < len; h+=2, k+=2){ // scorro fino in fondo
                         dist+=array[h-2]-array[h];
                         if (array[h] == dist2){
                             break;
@@ -498,16 +503,13 @@ int* array = malloc(2*sizeof(int));
             }
         }
         printf("\n");
-
-
+    	free(array);
+    	free(res);
+    
     } else { // da destra verso sinistra, inorder tree-walk right, parent, left
         int* array = malloc(2*sizeof(int));
         int len = 0;
         array = Inorder_tree_walk_array_right_left(Stations, array, &len, dist2, dist1);
-
-        // for (int i = 0; i < len; i++){
-        //     printf("%d\n",array[i]);
-        // }
 
 
         int * res = malloc(sizeof(int));
@@ -524,9 +526,8 @@ int* array = malloc(2*sizeof(int));
         }
 
 
-
-
         counter = increase_counter(counter, possibilities2, poss_size, &finished);
+
 
         while (!finished) { // ogni ciclo controlla una permutazione
             int change = 0;
@@ -550,7 +551,11 @@ int* array = malloc(2*sizeof(int));
                 }
                 change = confronta(res2, res, res_size);
                 if (change){
+		    free(res);
                     res = res2;
+                } else {
+                    free(res2);
+                    
                 }
             }
             
@@ -558,26 +563,6 @@ int* array = malloc(2*sizeof(int));
         }
 
         
-
-
-        // printf("poss_size: %d\n", poss_size);
-
-
-        // for (int i = 0; i<poss_size; i++){
-        //     printf("poss1: %d\n", possibilities1[i]);
-        // }
-
-        // for (int i = 0; i<poss_size; i++){
-        //     printf("poss2: %d\n", possibilities2[i]);
-        // }
-
-        // for (int i = 0; i<poss_size; i++){
-        //     printf("poss3: %d\n", possibilities3[i]);
-        // }
-
-
-
-
         if (found){
             for (int i = 0; i < res_size; i++){
                 if (i != res_size-1){
@@ -588,54 +573,70 @@ int* array = malloc(2*sizeof(int));
             }
         }
         printf("\n");
-
+    	free(res);
+    	free(array);
+    	free(possibilities1);
+    	free(possibilities2);
+    	free(possibilities3);
+    	free(counter);
     }
 }
 
 
-// // ----------------------------------------------------------------------------------------------------------------
+// // -----------------------------------------------------MAIN-----------------------------------------------------------
+
+void Dismantle(station* x){
+    if (x != NULL){
+        Dismantle(x->left);
+        station* next = x->right;
+        free(x->vehicles);
+        free(x);
+        Dismantle(next);
+    }
+}
+
+
 
 
 int main(){
     char input[1024]; // probabilmente serve di più
-    FILE * f = fopen("../others/archive/extra_test_cases/open_extra_gen.txt", "r");
-    f = stdin;
-    fscanf(f, "%s ", input);
+    int res;
+    res = scanf("%s ", input);
     int distance=0, vehicles_num=0, autonomy=0, dist1=0, dist2=0, autonomies[512];
     for (int i=0; i<512; i++){
         autonomies[i] = 0;
     }
     do {
         if (!strcmp(input, "aggiungi-stazione")){
-            fscanf(f, "%d %d", &distance, &vehicles_num);
+            res = scanf("%d %d", &distance, &vehicles_num);
             for (int i = 0; i < vehicles_num; i++){
-                fscanf(f, " %d", &autonomies[i]);
+                res = scanf(" %d", &autonomies[i]);
             }
             AggiungiStazione(distance, vehicles_num, autonomies);
         } else if (!strcmp(input, "demolisci-stazione")){
-            fscanf(f, "%d ", &distance);
+            res = scanf("%d ", &distance);
             DemolisciStazione(distance);
         } else if (!strcmp(input, "aggiungi-auto")){
-            fscanf(f, "%d %d ", &distance, &autonomy);
+            res = scanf("%d %d ", &distance, &autonomy);
             AggiungiAuto(distance, autonomy);
         } else if (!strcmp(input, "rottama-auto")){
-            fscanf(f, "%d %d ", &distance, &autonomy);
+            res = scanf("%d %d ", &distance, &autonomy);
             RottamaAuto(distance, autonomy);
         } else if (!strcmp(input, "pianifica-percorso")){
-            fscanf(f, "%d %d ", &dist1, &dist2);
+            res = scanf("%d %d ", &dist1, &dist2);
             PianificaPercorso(dist1, dist2);
         }
-        fscanf (f, "%s ", input);
-    } while (!feof(f));
+        res = scanf ("%s ", input);
+        if (res == EOF){
+            break;
+        }
+    } while (!feof(stdin));
+   
 
-    // int* array = malloc(2*sizeof(int));
-    // int len = 0;
+    
+    Dismantle(Stations);
+    
 
-    // array = Inorder_tree_walk_array_right_left(Stations, array, &len);
-
-    // for (int i = 0; i < len; i++){
-    //     printf("%d\n",array[i]);
-    // }
 
 
     return 0;
