@@ -225,5 +225,3 @@ diff ../others/archive/archivio_test_aperti/open_109.output.txt outputs/output10
 diff ../others/archive/archivio_test_aperti/open_110.output.txt outputs/output110.txt &&
 diff ../others/archive/archivio_test_aperti/open_111.output.txt outputs/output111.txt &&
 diff ../others/archive/extra_test_cases/open_extra_gen.output.txt  outputs/outputextra.txt
-
-../others/archive/extra_test_cases/open_extra_gen.txt
