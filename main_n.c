@@ -409,8 +409,16 @@ void PianificaPercorso (int dist1, int dist2) {
             fprintf(stderr, "ERRORE");
             exit(-1);
         }
+
         int len = 0;
         array = Inorder_tree_walk_array_right_left(Stations, array, &len, dist1, dist2);
+
+
+        // FILE *fp = fopen("array.txt", "a");
+        // for (int i = 0; i < len; i++){
+        //     fprintf(fp, "%d ", array[i]);
+        // }
+        // fprintf(fp, "\n\n");
 
         int *res = (int*) malloc(sizeof(int));
         if (res == NULL){
@@ -418,64 +426,126 @@ void PianificaPercorso (int dist1, int dist2) {
             fprintf(stderr, "ERRORE");
             exit(-1);
         }
-        int res_size = 0, start = 0, dist = 0, exists = 0, found = 0;
+        int res_size = 0, dist = 0, found = 0;
+
+        res[res_size] = dist2;
+        res_size++;
+        res = realloc(res, (res_size+1)*sizeof(int));
 
         for (int i = 0, j=1; i < len; i+=2, j+=2){
-            if (start){
-                dist += array[i-2] - array[i];
-                if (dist > array[j]){ // cambio macchina 
-                    int inner_found = 0;
-                    for (int h = i+2, k = j+2; h < len; h+=2, k+=2){ // scorro fino in fondo
-                        dist+=array[h-2]-array[h];
-                        if (array[h] == dist2){
-                            break;
-                        } 
-                        if (array[k] >= dist){
-                            inner_found=1;
-                            i = h;
-                            j = k;
-                        }
-                    }
-                    if (inner_found){
-                        res[res_size] = array[i];
-                        res_size++;
-                        res = realloc(res, (res_size+1)*sizeof(int));
-                        dist = 0;
-                        exists = 0;
-                    }
-                    else {
-                        if (!exists){
+
+            // fprintf(fp, "array[i]: %d\n", array[i]);
+            // fprintf(fp, "res:  ");
+            // for (int z = 0; z < res_size; z++){
+            //     fprintf(fp, "%d ", res[z]);
+            // }
+            // fprintf(fp, "\n");
+
+            int index = 0;
+            for (int h = i+2, k = j+2; h < len; h+=2, k+=2){ // scorro fino in fondo
+                //fprintf(fp, "array[h]: %d\n", array[h]);
+                dist += array[h-2]-array[h];
+                //fprintf(fp, "dist: %d\n", dist);
+                if (array[h] == dist1){ // uguale a h = len-1 in teoria
+                    //fprintf(fp, "fine\n");
+                    if (array[k] >= dist){ // fine
+                        res[res_size] = array[h];
+                        res_size ++;
+                        found = 1;
+                        i = len;
+                        break; // non serve ma vabbe
+                    } else { // uso l'ultimo posto dove sapevo di poter andare oppure non ci sono percorsi
+                        if (index == 0){
                             printf("nessun percorso");
+                            i = len;
                             break;
-                        } else { // cambio macchina
-                            i -= 2;
-                            j -= 2;
-                            res[res_size] = array[i];
+                        } else {
+                            i = index-2;
+                            j = i+1;
+                            res[res_size] = array[index];
                             res_size++;
                             res = realloc(res, (res_size+1)*sizeof(int));
                             dist = 0;
-                            exists = 0;
+                            break; // non serve ma vabbe
                         }
                     }
-                } else { 
-                    exists = 1;
-                    // all good
+                } else {
+                    if (array[k] >= dist){ // posso arrivare fino a qui
+                        index = h;
+                    }
                 }
-                if (array[i]==dist1){ // finito
+            }
+            if (array[i] == dist1){ // fine, uguale a i = len-1 in teoria
+                if (!found){
+                    //fprintf(fp, "hdwbnjcknwijdscnajn");
+                    found = 1;
                     res[res_size] = array[i];
                     res_size ++;
-                    found = 1;
-                    break;
                 }
+                break; // non serve ma vabbe
             }
-            if (array[i] == dist2){
-                start = 1;
-                res[res_size] = dist2;
-                res_size++;
-                res = realloc(res, (res_size+1)*sizeof(int));
-                dist = 0;
-            }
+            //fprintf(fp, "\n\n");
+
+
+
+            // if (start){
+            //     dist += array[i-2] - array[i];
+            //     if (dist > array[j]){ // cambio macchina 
+            //         int inner_found = 0;
+            //         for (int h = i+2, k = j+2; k < len; h+=2, k+=2){ // scorro fino in fondo
+            //             dist+=array[h-2]-array[h];
+            //             if (array[h] == dist2){
+            //                 break;
+            //             } 
+            //             if (array[k] >= dist){
+            //                 inner_found=1;
+            //                 i = h;
+            //                 j = k;
+            //             }
+            //         }
+
+            //         if (inner_found){
+            //             res[res_size] = array[i];
+            //             res_size++;
+            //             res = realloc(res, (res_size+1)*sizeof(int));
+            //             dist = 0;
+            //             exists = 0;
+            //         }
+            //         else {
+            //             if (!exists){
+            //                 printf("nessun percorso");
+            //                 break;
+            //             } else { // cambio macchina
+            //                 i -= 2;
+            //                 j -= 2;
+            //                 res[res_size] = array[i];
+            //                 res_size++;
+            //                 res = realloc(res, (res_size+1)*sizeof(int));
+            //                 dist = 0;
+            //                 exists = 0;
+            //             }
+            //         }
+            //     } else { 
+            //         exists = 1;
+            //         // all good
+            //     }
+            //     if (array[i]==dist1){ // finito
+            //         res[res_size] = array[i];
+            //         res_size ++;
+            //         found = 1;
+            //         break;
+            //     }
+            // }
+            // if (array[i] == dist2){
+            //     start = 1;
+            //     res[res_size] = dist2;
+            //     res_size++;
+            //     res = realloc(res, (res_size+1)*sizeof(int));
+            //     dist = 0;
+            // }
         }
+
+        //fclose (fp);
 
         if (found){
             for (int i=res_size-1; i>=0; i--){
@@ -486,10 +556,9 @@ void PianificaPercorso (int dist1, int dist2) {
                 }
             }
         }
+
         free(array);
         free(res);
-
-
 
     } else { // da destra verso sinistra dist2 < dist1
         int* array = (int*) malloc(2*sizeof(int));
@@ -501,6 +570,8 @@ void PianificaPercorso (int dist1, int dist2) {
 
         int len = 0;
         array = Inorder_tree_walk_array_right_left(Stations, array, &len, dist2, dist1);
+
+
 
         int * res = (int*) malloc(sizeof(int));
         if (res == NULL){
@@ -605,6 +676,8 @@ void PianificaPercorso (int dist1, int dist2) {
 
 
 int main(){
+    // FILE *fp = fopen("array.txt", "w");
+    // fclose(fp);
     char input[1024];
     int res;
     res = scanf("%s ", input);
@@ -639,5 +712,8 @@ int main(){
 
     Dismantle(Stations);
     
+    
 
 }
+
+

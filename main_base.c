@@ -227,9 +227,26 @@ int confronta(int *res2, int *res_init, int res_size){
     return 0;
 }
 
+int * increase_counter (int *counter, int *limits, int poss_size, int * finished){
+    int c = 0;
+    while (1){
+        if (c == poss_size){
+            *finished = 1;
+            break;
+        }
+        if (counter[c] < limits[c]){
+            counter[c]++;
+            break;
+        } else {
+            counter[c] = 0;
+            c ++;
+        }
+    }
+    return counter;
+}
 
 
-int * pianifica_helper(int *found, int *res_size, int *res, int *array, int len, int dist1, int dist2, int *poss1, int *poss2, int *poss3){
+int * pianifica_helper(int *found, int *res_size, int *res, int *array, int len, int dist1, int dist2, int **possibilities1, int **possibilities2, int **possibilities3,  int *poss_size, int *poss1, int *poss2, int *poss3){
     int start = 0, dist = 0, max_index = 0, max_sum = 0, cur_index = 0, exists = 0;
     for (int i = 0, j = 1; i < len; i+=2, j+=2){
         if (start){
@@ -238,9 +255,16 @@ int * pianifica_helper(int *found, int *res_size, int *res, int *array, int len,
             if (dist > array[cur_index+1]){  // non posso andare oltre con l'autonomia che ho e scelgo la stazione migliore
                 if (exists){
                     if (i - 2 - max_index > 0){ // se ci sono possibili stazioni in cui posso amdare dopo ma non massime
-                        *poss1 =  max_index; // beginning index in array
-                        *poss2 = (i - 2 - max_index)/2;// numbers of elements
-                        *poss3 = *res_size; // index in res
+                        *(*(possibilities1)+ (*(poss_size))) = max_index; // beginning index in array
+                        *(*(possibilities2)+ (*(poss_size))) =  (i - 2 - max_index)/2; // numbers of elements
+                        *(*(possibilities3)+ (*(poss_size))) = *res_size; // index in res
+                        *(poss_size) += 1;
+                        *possibilities1 = realloc (*possibilities1, ( *(poss_size)+1 ) * sizeof(int));
+                        *possibilities2 = realloc (*possibilities2, ( *(poss_size)+1 ) * sizeof(int));
+                        *possibilities3 = realloc (*possibilities3, ( *(poss_size)+1 ) * sizeof(int));
+                        *poss1 =  max_index;
+                        *poss2 = (i - 2 - max_index)/2;
+                        *poss3 = *res_size;
                     }
 
                     i = max_index;
@@ -309,6 +333,7 @@ int * pianifica_helper(int *found, int *res_size, int *res, int *array, int len,
     }
     return res;
 }
+
 
 
 
@@ -425,7 +450,7 @@ void PianificaPercorso (int dist1, int dist2) {
                 dist += array[i-2] - array[i];
                 if (dist > array[j]){ // cambio macchina 
                     int inner_found = 0;
-                    for (int h = i+2, k = j+2; h < len; h+=2, k+=2){ // scorro fino in fondo
+                    for (int h = i+2, k = j+2; k < len; h+=2, k+=2){ // scorro fino in fondo
                         dist+=array[h-2]-array[h];
                         if (array[h] == dist2){
                             break;
@@ -486,21 +511,29 @@ void PianificaPercorso (int dist1, int dist2) {
                 }
             }
         }
-        free(array);
-        free(res);
+	free(array);
+	free(res);
 
 
 
     } else { // da destra verso sinistra dist2 < dist1
         int* array = (int*) malloc(2*sizeof(int));
+
         if (array == NULL){
             printf("ERRORE");
             fprintf(stderr, "ERRORE");
             exit(-1);
         }
-
         int len = 0;
         array = Inorder_tree_walk_array_right_left(Stations, array, &len, dist2, dist1);
+
+        // FILE *fp = fopen("array.txt", "a");
+        // for (int i = 0; i < len; i++){
+        //     fprintf(fp, "%d ", array[i]);
+        // }
+        // fprintf(fp, "\n\n");
+        // fclose(fp);
+
 
         int * res = (int*) malloc(sizeof(int));
         if (res == NULL){
@@ -518,83 +551,47 @@ void PianificaPercorso (int dist1, int dist2) {
         }
         res_f[0] = dist2;
 
-        int res_size = 0, res_f_size = 1, found = 0, poss1 = 0, poss2 = 0, poss3 = 0, *res_final = NULL;
-        res = pianifica_helper(&found, &res_size, res, array, len, dist1, dist2, &poss1, &poss2, &poss3);
+        int * possibilities1 = (int*) malloc(sizeof(int));
+        if (possibilities1 == NULL){
+            printf("ERRORE");
+            fprintf(stderr, "ERRORE");
+            exit(-1);
+        }
+
+        int * possibilities2 = (int*) malloc(sizeof(int));
+        if (possibilities2 == NULL){
+            printf("ERRORE");
+            fprintf(stderr, "ERRORE");
+            exit(-1);
+        }
+
+        int * possibilities3 = (int*) malloc(sizeof(int));
+        if (possibilities3 == NULL){
+            printf("ERRORE");
+            fprintf(stderr, "ERRORE");
+            exit(-1);
+        }
+
+        int res_size = 0, found = 0, poss_size = 0, poss1 = 0, poss2 = 0, poss3 = 0, *res_final = NULL;
+        res = pianifica_helper(&found, &res_size, res, array, len, dist1, dist2, &possibilities1, &possibilities2, &possibilities3, &poss_size, &poss1, &poss2, &poss3);
 
 
         if (found){
-            while (poss2 != 0){
-
-                int index = poss1;
-                for (int i = 0; i <= poss2; i++){ // controllo ultimo elemento
-                    if (array[poss1 + i*2] - res[poss3+1] <= array[poss1 + i*2 + 1]){ // se posso andare più avanti di quanto sono adato prima e arrivo cmq alla fine
-                        index = poss1 + i*2;
-                    }
-                }
-
-
-                for (int i = res_size-2; i > poss3; i --){
-                    res_f_size ++;
-                    res_f = realloc(res_f, res_f_size*sizeof(int));
-                    res_f[res_f_size-1] = res[i];
-                }
-
-                res_f_size ++;
-                res_f = realloc(res_f, res_f_size*sizeof(int));
-                res_f[res_f_size-1] = array[index];
-
-
-                len = index+2;
-                array = realloc(array, (len*2)*sizeof(int));
-
-                res_size = 0;
-                res = realloc(res, sizeof(int));
-                if (res == NULL){
-                        printf("ERRORE");
-                        fprintf(stderr, "ERRORE");
-                        exit(-1);
-                }
-
-                poss1 = 0;
-                poss2 = 0;
-                poss3 = 0;
-
-                res = pianifica_helper(&found, &res_size, res, array, len, dist1, res_f[res_f_size-1], &poss1, &poss2, &poss3);
-
-
-            }
-
-            res_final = (int*) malloc((res_size+res_f_size)*sizeof(int));
-            if (res_f == NULL){
-                    printf("ERRORE");
-                    fprintf(stderr, "ERRORE");
-                    exit(-1);
-            }
-
-            res_size --;
-            res = realloc(res, res_size*sizeof(int));
-
             for (int i = 0; i < res_size; i++){
-                res_final[i] = res[i];
-            }
-            for (int i = res_size, j = res_f_size -1 ; i < res_size+res_f_size; i++, j--){
-                res_final[i] = res_f[j];
-            }
-        }
-
-
-        if (found){
-            for (int i = 0; i < res_f_size + res_size; i++){
-                if (i != res_size + res_f_size - 1){
-                    printf("%d ", res_final[i]);
+                if (i != res_size - 1){
+                    printf("%d ", res[i]);
                 } else {
-                    printf("%d", res_final[i]);
+                    printf("%d", res[i]);
                 }
             }
         }
+
 
         free(res);
         free(array);
+        free(possibilities1);
+        free(possibilities2);
+        free(possibilities3);
         free(res_f);
         free(res_final);
     }
@@ -605,6 +602,8 @@ void PianificaPercorso (int dist1, int dist2) {
 
 
 int main(){
+    FILE *fp = fopen("array.txt", "w");
+    fclose(fp);
     char input[1024];
     int res;
     res = scanf("%s ", input);
