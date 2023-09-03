@@ -233,9 +233,9 @@ int * pianifica_helper(int *found, int *res_size, int *res, int *array, int len,
             if (dist > array[cur_index+1]){  // non posso andare oltre con l'autonomia che ho e scelgo la stazione migliore
                 if (exists){
                     if (i - 2 - max_index > 0){ // se ci sono possibili stazioni in cui posso amdare dopo ma non massime
-                        *poss1 =  max_index; // beginning index in array
-                        *poss2 = (i - 2 - max_index)/2;// numbers of elements
-                        *poss3 = *res_size; // index in res
+                        *poss1 =  max_index; // indice iniziale nell'array
+                        *poss2 = (i - 2 - max_index)/2;// numero di elementi
+                        *poss3 = *res_size; // indice in res
                     }
 
                     i = max_index;
@@ -255,7 +255,7 @@ int * pianifica_helper(int *found, int *res_size, int *res, int *array, int len,
                 exists = 1;
             }
             
-            if (array[i] == dist2){ // fine DA RENDERE PIU SEMPLICE, FOR NON SERVE CREDO 
+            if (array[i] == dist2){ // fine, forse migliorabile togliendo il for
                 if (array[cur_index+1] >= array[cur_index]-dist2){ // se la'autonomia della stazione in cui mi trovo mi consente di fare la strada per arrivare alla fine 
                     res[*res_size] = dist2;
                     (*res_size)++;
