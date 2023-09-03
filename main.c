@@ -27,6 +27,30 @@ void station_constructor(station* station, int distance){
 
 // ------------------------------------------------ ALBERI BINARI DI RICERCA ----------------------------------------------------------------
 
+
+void Transplant(station* u, station* v){  // serve per tree_delete
+    if (u->parent == NULL){
+        Stations = v;
+    } else if (u == u->parent->left){
+        u->parent->left = v;
+    } else {
+        u->parent->right = v;
+    }
+    if (v != NULL){
+        v->parent = u->parent;
+    }
+}
+
+station* Tree_min(station* x){
+    while (x->left != NULL){
+        x = x->left;
+    } return x;
+}
+
+
+
+
+
 station* Tree_search(station* x, int distance){
     if (x == NULL || distance == x->distance){
         return x;
@@ -46,7 +70,7 @@ int Tree_insert(station* element){
         y = x;
         if (element->distance < x->distance){
             x = x->left;
-        } else if (element->distance > x->distance){      // DA QUI HO AGGIUNTO RISPETTO A CORMEN
+        } else if (element->distance > x->distance){      // Da qui ho aggiunto rispetto al Cormen
             x = x->right;
         } else {
             return 1;
@@ -57,7 +81,7 @@ int Tree_insert(station* element){
         Stations = element;
     } else if (element->distance < y->distance){
         y->left = element;
-    } else if (element->distance > y->distance){                                                // DA QUI HO AGGIUNTO RISPETTO A CORMEN
+    } else if (element->distance > y->distance){           // Da qui ho aggiunto rispetto al Cormen
         y->right = element;
     } else {
         return 1;
@@ -65,25 +89,6 @@ int Tree_insert(station* element){
     return 0;
 }
 
-
-void Transplant(station* u, station* v){
-    if (u->parent == NULL){
-        Stations = v;
-    } else if (u == u->parent->left){
-        u->parent->left = v;
-    } else {
-        u->parent->right = v;
-    }
-    if (v != NULL){
-        v->parent = u->parent;
-    }
-}
-
-station* Tree_min(station* x){
-    while (x->left != NULL){
-        x = x->left;
-    } return x;
-}
 
 void Tree_delete(station* element){
     if (element->left == NULL){
@@ -105,6 +110,8 @@ void Tree_delete(station* element){
     free(element);
     
 }
+
+
 
 
 int* Inorder_tree_walk_array_right_left(station* x, int* array, int *len, int min_dist, int max_dist){
@@ -188,7 +195,6 @@ int* Heap_add(int autonomy, int* vehicles, int *num_vehicles){
     if (*num_vehicles == 0){
         vehicles = (int*) malloc(sizeof(int));
         if (vehicles == NULL){
-            printf("ERRORE");
             fprintf(stderr, "ERRORE");
             exit(-1);
         }
@@ -216,17 +222,6 @@ void Dismantle(station* x){
         Dismantle(next);
     }
 }
-
-
-int confronta(int *res2, int *res_init, int res_size){
-    for (int i = 0; i<res_size; i++){
-        if (res2[i]<res_init[i]){
-            return 1;
-        }
-    }
-    return 0;
-}
-
 
 
 int * pianifica_helper(int *found, int *res_size, int *res, int *array, int len, int dist1, int dist2, int *poss1, int *poss2, int *poss3){
@@ -259,8 +254,6 @@ int * pianifica_helper(int *found, int *res_size, int *res, int *array, int len,
             } else {
                 exists = 1;
             }
-            
-            
             
             if (array[i] == dist2){ // fine DA RENDERE PIU SEMPLICE, FOR NON SERVE CREDO 
                 if (array[cur_index+1] >= array[cur_index]-dist2){ // se la'autonomia della stazione in cui mi trovo mi consente di fare la strada per arrivare alla fine 
@@ -315,12 +308,12 @@ int * pianifica_helper(int *found, int *res_size, int *res, int *array, int len,
 // ----------------------------------------------------------------------------------------------------------------
 
 
-// ------------------------------------------------ FUNZIONI ----------------------------------------------------------------
+// ------------------------------------------------ FUNZIONI PRINCIPALI ----------------------------------------------------------------
+
 
 void AggiungiStazione (int distance, int num_vehicles, int autonomies[512]) {
     station* element = (station*) malloc(sizeof(station));
     if (element == NULL){
-        printf("ERRORE");
         fprintf(stderr, "ERRORE");
         exit(-1);
     }
@@ -331,7 +324,6 @@ void AggiungiStazione (int distance, int num_vehicles, int autonomies[512]) {
         if (num_vehicles == 0){
             element -> vehicles = malloc(sizeof(int));
             if (element -> vehicles == NULL){
-                printf("ERRORE");
                 fprintf(stderr, "ERRORE");
                 exit(-1);
             }
@@ -398,82 +390,70 @@ void RottamaAuto (int distance, int autonomy){
 }
 
 
-
 void PianificaPercorso (int dist1, int dist2) {
     if (dist1 == dist2){
         printf("%d", dist1);
+
     } else if (dist1 < dist2){ // da sinistra verso destra
 	    int* array = malloc(2*sizeof(int));
         if (array == NULL){
-            printf("ERRORE");
             fprintf(stderr, "ERRORE");
             exit(-1);
         }
+
         int len = 0;
         array = Inorder_tree_walk_array_right_left(Stations, array, &len, dist1, dist2);
 
         int *res = (int*) malloc(sizeof(int));
         if (res == NULL){
-            printf("ERRORE");
             fprintf(stderr, "ERRORE");
             exit(-1);
         }
-        int res_size = 0, start = 0, dist = 0, exists = 0, found = 0;
+
+        int res_size = 0, dist = 0, found = 0;
+        res[res_size] = dist2;
+        res_size++;
+        res = realloc(res, (res_size+1)*sizeof(int));
 
         for (int i = 0, j=1; i < len; i+=2, j+=2){
-            if (start){
-                dist += array[i-2] - array[i];
-                if (dist > array[j]){ // cambio macchina 
-                    int inner_found = 0;
-                    for (int h = i+2, k = j+2; h < len; h+=2, k+=2){ // scorro fino in fondo
-                        dist+=array[h-2]-array[h];
-                        if (array[h] == dist2){
-                            break;
-                        } 
-                        if (array[k] >= dist){
-                            inner_found=1;
-                            i = h;
-                            j = k;
-                        }
-                    }
-                    if (inner_found){
-                        res[res_size] = array[i];
-                        res_size++;
-                        res = realloc(res, (res_size+1)*sizeof(int));
-                        dist = 0;
-                        exists = 0;
-                    }
-                    else {
-                        if (!exists){
+            int index = 0;
+            for (int h = i+2, k = j+2; h < len; h+=2, k+=2){ // scorro fino in fondo
+                dist += array[h-2]-array[h];
+                if (array[h] == dist1){ // uguale a h = len-1 in teoria
+                    if (array[k] >= dist){ // fine
+                        res[res_size] = array[h];
+                        res_size ++;
+                        found = 1;
+                        i = len;
+                        break; // non serve ma vabbe
+                    } else { // uso l'ultimo posto dove sapevo di poter andare oppure non ci sono percorsi
+                        if (index == 0){
                             printf("nessun percorso");
+                            i = len;
                             break;
-                        } else { // cambio macchina
-                            i -= 2;
-                            j -= 2;
-                            res[res_size] = array[i];
+                        } else {
+                            i = index-2;
+                            j = i+1;
+                            res[res_size] = array[index];
                             res_size++;
                             res = realloc(res, (res_size+1)*sizeof(int));
                             dist = 0;
-                            exists = 0;
+                            break; // non serve ma vabbe
                         }
                     }
-                } else { 
-                    exists = 1;
-                    // all good
-                }
-                if (array[i]==dist1){ // finito
-                    res[res_size] = array[i];
-                    res_size ++;
-                    found = 1;
-                    break;
+                } else {
+                    if (array[k] >= dist){ // posso arrivare fino a qui
+                        index = h;
+                    }
                 }
             }
-            if (array[i] == dist2){
-                start = 1;
-                res[res_size] = dist2;
-                res_size++;
-                res = realloc(res, (res_size+1)*sizeof(int));
-                dist = 0;
+            if (array[i] == dist1){ // fine, uguale a i = len-1 in teoria
+                if (!found){
+                    found = 1;
+                    res[res_size] = array[i];
+                    res_size ++;
+                }
+                break; // non serve ma vabbe
             }
         }
 
@@ -486,15 +466,14 @@ void PianificaPercorso (int dist1, int dist2) {
                 }
             }
         }
+
         free(array);
         free(res);
 
+    } else { // da destra verso sinistra (dist2 < dist1)
 
-
-    } else { // da destra verso sinistra dist2 < dist1
         int* array = (int*) malloc(2*sizeof(int));
         if (array == NULL){
-            printf("ERRORE");
             fprintf(stderr, "ERRORE");
             exit(-1);
         }
@@ -504,15 +483,12 @@ void PianificaPercorso (int dist1, int dist2) {
 
         int * res = (int*) malloc(sizeof(int));
         if (res == NULL){
-                printf("ERRORE");
                 fprintf(stderr, "ERRORE");
                 exit(-1);
         }
 
-
         int * res_f = (int*) malloc(sizeof(int));
         if (res_f == NULL){
-                printf("ERRORE");
                 fprintf(stderr, "ERRORE");
                 exit(-1);
         }
@@ -521,17 +497,14 @@ void PianificaPercorso (int dist1, int dist2) {
         int res_size = 0, res_f_size = 1, found = 0, poss1 = 0, poss2 = 0, poss3 = 0, *res_final = NULL;
         res = pianifica_helper(&found, &res_size, res, array, len, dist1, dist2, &poss1, &poss2, &poss3);
 
-
         if (found){
             while (poss2 != 0){
-
                 int index = poss1;
                 for (int i = 0; i <= poss2; i++){ // controllo ultimo elemento
                     if (array[poss1 + i*2] - res[poss3+1] <= array[poss1 + i*2 + 1]){ // se posso andare più avanti di quanto sono adato prima e arrivo cmq alla fine
                         index = poss1 + i*2;
                     }
                 }
-
 
                 for (int i = res_size-2; i > poss3; i --){
                     res_f_size ++;
@@ -543,14 +516,12 @@ void PianificaPercorso (int dist1, int dist2) {
                 res_f = realloc(res_f, res_f_size*sizeof(int));
                 res_f[res_f_size-1] = array[index];
 
-
                 len = index+2;
                 array = realloc(array, (len*2)*sizeof(int));
 
                 res_size = 0;
                 res = realloc(res, sizeof(int));
                 if (res == NULL){
-                        printf("ERRORE");
                         fprintf(stderr, "ERRORE");
                         exit(-1);
                 }
@@ -560,13 +531,10 @@ void PianificaPercorso (int dist1, int dist2) {
                 poss3 = 0;
 
                 res = pianifica_helper(&found, &res_size, res, array, len, dist1, res_f[res_f_size-1], &poss1, &poss2, &poss3);
-
-
             }
 
             res_final = (int*) malloc((res_size+res_f_size)*sizeof(int));
             if (res_f == NULL){
-                    printf("ERRORE");
                     fprintf(stderr, "ERRORE");
                     exit(-1);
             }
@@ -581,7 +549,6 @@ void PianificaPercorso (int dist1, int dist2) {
                 res_final[i] = res_f[j];
             }
         }
-
 
         if (found){
             for (int i = 0; i < res_f_size + res_size; i++){
@@ -638,6 +605,4 @@ int main(){
     } while (res != EOF);
 
     Dismantle(Stations);
-    
-
 }
